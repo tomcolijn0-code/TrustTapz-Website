@@ -4,20 +4,22 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #111827;
+  --blue-primary: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-light: #eff6ff;
+  --blue-border: #bfdbfe;
+  --text-primary: #111827;
+  --text-subtle: #6b7280;
+  --dark-bg: #0f172a;
 }
 
 body {
-  color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
