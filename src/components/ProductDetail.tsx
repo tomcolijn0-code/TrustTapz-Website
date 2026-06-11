@@ -5,7 +5,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, ArrowLeft, Check, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Product, KleurVariant, PRODUCTEN, formatPrijs } from "@/lib/productenData";
+import { Product, KleurVariant, formatPrijs } from "@/lib/productenData";
 import { useCart } from "@/context/CartContext";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];

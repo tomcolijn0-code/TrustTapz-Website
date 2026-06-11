@@ -294,7 +294,7 @@ export default function AfrekelenPage() {
                       Google Maps
                     </a>
                     , klik op{" "}
-                    <span className="font-semibold">'Reviews schrijven'</span>{" "}
+                    <span className="font-semibold">&apos;Reviews schrijven&apos;</span>{" "}
                     en kopieer de link.
                   </span>
                 </div>
