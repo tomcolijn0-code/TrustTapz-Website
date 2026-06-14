@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, ArrowLeft, Check, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -155,29 +155,21 @@ interface GalerijProps {
 
 function ProductGalerij({ images, productNaam }: GalerijProps) {
   const [index, setIndex] = useState(0);
-  const [dir, setDir]     = useState(0);
-
   const total = images.length;
   const showControls = total > 1;
+  const dragStartX = useRef<number | null>(null);
 
-  function goTo(newIndex: number, newDir?: number) {
-    const d = newDir ?? (newIndex > index ? 1 : -1);
-    setDir(d);
-    setIndex(newIndex);
+  function prev() { setIndex(i => (i - 1 + total) % total); }
+  function next() { setIndex(i => (i + 1) % total); }
+
+  function onPointerDown(e: React.PointerEvent) { dragStartX.current = e.clientX; }
+  function onPointerUp(e: React.PointerEvent) {
+    if (dragStartX.current === null) return;
+    const delta = e.clientX - dragStartX.current;
+    if (delta < -50) next();
+    else if (delta > 50) prev();
+    dragStartX.current = null;
   }
-  function prev() { goTo((index - 1 + total) % total, -1); }
-  function next() { goTo((index + 1) % total,         1); }
-
-  function handleDragEnd(_: unknown, info: PanInfo) {
-    if (info.offset.x < -50) next();
-    else if (info.offset.x > 50) prev();
-  }
-
-  const slideVariants = {
-    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%", opacity: 0 }),
-    center:              { x: 0, opacity: 1 },
-    exit:  (d: number) => ({ x: d > 0 ? "-100%" : "100%", opacity: 0 }),
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -187,35 +179,47 @@ function ProductGalerij({ images, productNaam }: GalerijProps) {
         className="relative rounded-2xl overflow-hidden"
         style={{ background: "#ffffff", border: "1px solid #e5e7eb" }}
       >
-        {/* Slide area */}
-        <div className="overflow-hidden" style={{ touchAction: "pan-y" }}>
-          <AnimatePresence initial={false} custom={dir} mode="wait">
-            <motion.div
-              key={index}
-              custom={dir}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.22, ease: EASE }}
-              drag={showControls ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.12}
-              onDragEnd={handleDragEnd}
-              style={{ cursor: showControls ? "grab" : "default" }}
-              whileDrag={{ cursor: "grabbing" }}
+        {/* Alle foto's gestapeld — directe crossfade zonder laadtijd */}
+        <div
+          className="relative select-none"
+          style={{ touchAction: "pan-y", cursor: showControls ? "grab" : "default" }}
+          onPointerDown={showControls ? onPointerDown : undefined}
+          onPointerUp={showControls ? onPointerUp : undefined}
+        >
+          {/* Onzichtbare spacer houdt container-hoogte stabiel */}
+          <Image
+            src={images[0]}
+            alt=""
+            aria-hidden
+            width={800}
+            height={800}
+            className="w-full h-auto object-contain invisible"
+            priority
+            draggable={false}
+          />
+          {/* Alle foto's absoluut gestapeld, CSS opacity crossfade */}
+          {images.map((src, i) => (
+            <div
+              key={src}
+              className="absolute inset-0"
+              style={{
+                opacity: i === index ? 1 : 0,
+                transition: "opacity 0.2s ease-in-out",
+                pointerEvents: i === index ? "auto" : "none",
+              }}
             >
               <Image
-                src={images[index]}
-                alt={`${productNaam} — foto ${index + 1}`}
+                src={src}
+                alt={`${productNaam} — foto ${i + 1}`}
                 width={800}
                 height={800}
-                className="w-full h-auto object-contain select-none"
-                priority={index === 0}
+                className="w-full h-auto object-contain"
+                priority={i === 0}
+                loading={i === 0 ? undefined : "eager"}
                 draggable={false}
               />
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ))}
         </div>
 
         {/* Pijltjes (desktop) */}
@@ -264,7 +268,7 @@ function ProductGalerij({ images, productNaam }: GalerijProps) {
         )}
       </div>
 
-      {/* ── Thumbnails ──────────────────────────────────────────────── */}
+      {/* ── Thumbnails — allemaal priority voor instant laden ────────── */}
       {showControls && (
         <div className="flex gap-2.5 flex-wrap">
           {images.map((src, i) => {
@@ -272,7 +276,7 @@ function ProductGalerij({ images, productNaam }: GalerijProps) {
             return (
               <button
                 key={src}
-                onClick={() => goTo(i)}
+                onClick={() => setIndex(i)}
                 className="rounded-xl overflow-hidden transition-all hover:opacity-80 flex-shrink-0"
                 style={{
                   width: 72,
@@ -290,6 +294,8 @@ function ProductGalerij({ images, productNaam }: GalerijProps) {
                   width={144}
                   height={144}
                   className="w-full h-full object-contain"
+                  priority={true}
+                  draggable={false}
                 />
               </button>
             );
